@@ -117,11 +117,8 @@ class Tasks(TaskSet):
 
     def on_start(self):
         login(self)
-        
-    @task
-    def test(self):
-        login(self)
 
+    @task
     def upload(self):
         get_response = self.client.get(url)
         post_data = {
