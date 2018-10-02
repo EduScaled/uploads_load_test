@@ -1,4 +1,5 @@
 files_to_upload
 tmp
 venv
+credentials
 __pycache__

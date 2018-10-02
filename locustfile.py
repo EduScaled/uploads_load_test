@@ -8,12 +8,14 @@ from pyquery import PyQuery
 
 event = "74b34901-eaf9-45ac-aa28-5a61be30fb09"
 
-credentials = [
-    {
-        "login": "",
-        "password": ""
-    },
-]
+credentials = []
+with open("credentials", "r") as cf:
+    for l in cf:
+        data = l.split(':')
+        credentials.append({
+            "login": data[0].strip(),
+            "password": data[1].strip()
+        })
 
 files_to_upload = [
     'files_to_upload/1mb', 
@@ -110,7 +112,7 @@ def login(l):
 
     response_confirm_url = redirect_url if not is_already_authorized(response_login.url) else response_login.url
     response_confirm = l.client.get(response_confirm_url)
-    post_confirm_data = l.parse_html(response_confirm, confirm_kv)
+    post_confirm_data = parse_html(response_confirm, confirm_kv)
     response_confirm = l.client.post(response_confirm_url, data=post_confirm_data)
 
 class Tasks(TaskSet):
