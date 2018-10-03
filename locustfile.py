@@ -106,24 +106,17 @@ def admin_login(l):
     The method authenticates user using SSO admin page.
     """    
 
-    admin_login_url = "https://sso.u2035dev.ru/93486b42-2dca-41f7-a0c2-721b1553fb68/login/"
+    admin_login_url = "/admin/login/"
     get_response_admin_login = l.client.get(admin_login_url) 
-    
-    print(get_response_admin_login.url)
-    # print(get_response_admin_login.content.decode("utf-8"))
-    
+    headers = {
+        'referer': get_response_admin_login.url
+    }
     post_data = {
         'csrfmiddlewaretoken': get_response_admin_login.cookies['csrftoken'],
         'username': random.choice(admin_credentials)["login"],
         'password': random.choice(admin_credentials)["password"],
     }
-
-    print(post_data)
-
-    post_response_admin_login = l.client.post(get_response_admin_login.url, data=post_data)
-
-    print(post_response_admin_login.url)
-    # print(post_response_admin_login.content.decode("utf-8"))
+    post_response_admin_login = l.client.post(get_response_admin_login.url, data=post_data, headers=headers)
 
 def login(l):
     """
@@ -150,15 +143,14 @@ def login(l):
 class Tasks(TaskSet):
 
     def on_start(self):
-        # login(self)
         admin_login(self)
 
     @task
     def upload(self):
-        print("hello")
-
-        """
         get_response = self.client.get(url)
+        headers = {
+            'referer': get_response.url
+        }        
         post_data = {
             'csrfmiddlewaretoken': get_response.cookies['csrftoken'],
             'trace_name': get_trace_name(get_response),
@@ -167,8 +159,7 @@ class Tasks(TaskSet):
         files = {
             'file_field': open(random.choice(files_to_upload), 'rb')
         }
-        post_response = self.client.post(url, data=post_data, files=files)
-        """
+        post_response = self.client.post(url, headers=headers, data=post_data, files=files)
 
 class Locust(HttpLocust):
     task_set = Tasks
