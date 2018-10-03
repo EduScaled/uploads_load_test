@@ -8,14 +8,22 @@ from pyquery import PyQuery
 
 event = "74b34901-eaf9-45ac-aa28-5a61be30fb09"
 
-credentials = []
+credentials, admin_credentials = [], []
 with open("credentials", "r") as cf:
     for l in cf:
         data = l.split(':')
-        credentials.append({
-            "login": data[0].strip(),
-            "password": data[1].strip()
-        })
+        if len(data) == 2:
+            credentials.append({
+                "login": data[0].strip(),
+                "password": data[1].strip()
+            })
+        elif len(data) == 3 and data[0].strip() == 'admin':
+            admin_credentials.append({
+                "login": data[1].strip(),
+                "password": data[2].strip()
+            })
+        else:
+            raise Exception("Wrong credentials file format")           
 
 files_to_upload = [
     'files_to_upload/1mb', 
@@ -93,6 +101,30 @@ def get_trace_name(response):
         raise ResponseParsingException(trace_name_selector)
     return traces[0].attrib["value"]
 
+def admin_login(l):
+    """
+    The method authenticates user using SSO admin page.
+    """    
+
+    admin_login_url = "https://sso.u2035dev.ru/93486b42-2dca-41f7-a0c2-721b1553fb68/login/"
+    get_response_admin_login = l.client.get(admin_login_url) 
+    
+    print(get_response_admin_login.url)
+    # print(get_response_admin_login.content.decode("utf-8"))
+    
+    post_data = {
+        'csrfmiddlewaretoken': get_response_admin_login.cookies['csrftoken'],
+        'username': random.choice(admin_credentials)["login"],
+        'password': random.choice(admin_credentials)["password"],
+    }
+
+    print(post_data)
+
+    post_response_admin_login = l.client.post(get_response_admin_login.url, data=post_data)
+
+    print(post_response_admin_login.url)
+    # print(post_response_admin_login.content.decode("utf-8"))
+
 def login(l):
     """
     The method authenticates user using SSO.
@@ -118,10 +150,14 @@ def login(l):
 class Tasks(TaskSet):
 
     def on_start(self):
-        login(self)
+        # login(self)
+        admin_login(self)
 
     @task
     def upload(self):
+        print("hello")
+
+        """
         get_response = self.client.get(url)
         post_data = {
             'csrfmiddlewaretoken': get_response.cookies['csrftoken'],
@@ -132,6 +168,7 @@ class Tasks(TaskSet):
             'file_field': open(random.choice(files_to_upload), 'rb')
         }
         post_response = self.client.post(url, data=post_data, files=files)
+        """
 
 class Locust(HttpLocust):
     task_set = Tasks
